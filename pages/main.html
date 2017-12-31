@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>Cremosa</title>
+    </head>
+    <body>
+        <div id="Tela"></div>
+        <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+        <script>
+            function Tela() {
+                this.state = 'profile';
+            }
+
+            Tela.prototype = {
+                pages: {
+                    profile: function() {
+                        var profilesHTML = '';
+                        for (var i = 0; i <this.profiles.length; i++ ) {
+                            var profile=this.profiles[i];
+                            profilesHTML += '<span>' + profile.name + '</span>';
+                        }
+                        return profilesHTML;
+                    }
+                },
+                render: function(element) {
+                    var conteiner = document.querySelector(element);
+
+                    conteiner.innerHTML= this.pages[this.state].apply(this);
+                }
+            }
+
+            var tela = new Tela();
+
+            var profiles;
+            axios.get('/profiles')
+            .then(function (res) {
+                tela.profiles = res.data;
+                tela.render ('#Tela');
+            })
+        </script>
+    </body>
+</html>

@@ -1,0 +1,16 @@
+[
+    {
+        "name": "Horario Normal",
+        "hours": [
+            1100
+        ]
+    },
+    {
+        "name": "Horario Reduzido",
+        "hours": [
+            1200,
+            1500,
+            1800
+        ]
+    }
+]
