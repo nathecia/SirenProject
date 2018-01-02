@@ -7,24 +7,125 @@
     <body>
         <div id="Tela"></div>
         <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/lodash@4.17.4/lodash.min.js"></script>
         <script>
             function Tela() {
                 this.state = 'profile';
+                this.interval = null;
+                this.isRinging = false;
+                this.cicle = 0;
             }
 
             Tela.prototype = {
                 pages: {
                     profile: function() {
                         var profilesHTML = '';
-                        for (var i = 0; i <this.profiles.length; i++ ) {
-                            var profile=this.profiles[i];
-                            profilesHTML += '<span>' + profile.name + '</span>';
+                        for (var i = 0; i < this.profiles.length; i++ ) {
+                            var profile = this.profiles[i];
+                            profilesHTML += '<button onclick="tela.goToPage.call(tela, \'timer\', ' + i + ')">' + profile.name + '</button></br>';
                         }
                         return profilesHTML;
+                    },
+                    timer: function () {
+                        var profile = this.profiles[this.selectedProfile],
+                            times = this.splitTimer(profile.hours, this.getCurrentTime()),
+                            nextTime = times[0],
+                            vm = this,
+                            timerHTML = '<h1>'+ profile.name +'</h1> <h3> Próximo horario: ' + this.convertTime(nextTime) + ' </h3> <ul>';
+
+                        times.splice(0, 1);
+
+                        for (var i = 0; i < times.length; i++ ) {
+                            var hour = times[i];
+                            timerHTML += '<li>' + this.convertTime(hour) + '</li>';
+                        }
+
+                        timerHTML +=  '</ul> <br> <a href="#" onclick="tela.goToPage.call(tela, \'profile\')"> voltar </a>';
+
+                        this.interval = setInterval(function() {
+                            if (nextTime === vm.getCurrentTime() && !vm.isRinging) {
+                                vm.isRinging = true;
+                                axios('/on');
+                            }
+
+                            if (vm.isRinging && vm.cicle > 10) {
+                                vm.isRinging = false;
+                                vm.cicle = 0;
+                                axios('/off');
+
+                                axios.get('/profiles')
+                                .then(function (res) {
+                                    vm.profiles = res.data;
+                                    vm.render ('#Tela');
+                                })
+
+                            } else if (vm.isRinging && vm.cicle <= 10) {
+                                vm.cicle++;
+                            }
+
+                        }, 1000);
+
+                        return timerHTML;
                     }
+                },
+                convertTime: function (time, type) {
+                    var time = _.chunk(time.toString(), 2);
+                        time = _.map(time, function(data) {
+                            var iTime = parseInt(data.join(''));
+
+                            return iTime < 10 ? '0' + iTime : iTime;
+                        });
+
+                    if( type === 'array') {
+                        return time;
+                    }
+
+                    return time.join(':');
+                },
+                getCurrentTime: function () {
+                    var date = new Date (),
+                        hour =  '',
+                        minute = date.getMinutes ();
+
+                    hour += date.getHours ();
+                    hour += minute < 10 ? '0' + minute : minute;
+                    delete date;
+
+                    return parseInt (hour);
+                },
+                splitTimer: function (timer, separator){
+                    var splitTimes = _.partition(timer, function(item) {
+                        return item <= separator;
+                    });
+
+                    var lists = _.map(splitTimes, function (hours) {
+                        return hours.sort(function (a, b) {
+                            if (a < b) {
+                                return -1;
+                            } else if (a > b) {
+                                return 1;
+                            } else {
+                                return 0;
+                            }
+                        });
+                    });
+
+                    return _.concat(lists[1], lists[0]);
+
+                },
+                goToPage: function (state, index) {
+                    index = index || 0;
+                    this.selectedProfile = index;
+                    this.state = state;
+
+                    this.render ('#Tela');
                 },
                 render: function(element) {
                     var conteiner = document.querySelector(element);
+
+                    if (this.interval) {
+                        clearInterval(this.interval);
+                    }
 
                     conteiner.innerHTML= this.pages[this.state].apply(this);
                 }
