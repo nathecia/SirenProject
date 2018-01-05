@@ -22,16 +22,31 @@
                         var profilesHTML = '';
                         for (var i = 0; i < this.profiles.length; i++ ) {
                             var profile = this.profiles[i];
-                            profilesHTML += '<button onclick="tela.goToPage.call(tela, \'timer\', ' + i + ')">' + profile.name + '</button></br>';
+                            profilesHTML += '<button onclick="tela.goToPage.call(tela, \'timer\', ' + i + ', event)">' + profile.name + '</button></br>';
                         }
                         return profilesHTML;
+                    },
+                    edit: function () {
+                        var editHTML = '',
+                            profile = this.profiles[this.selectedProfile];
+
+
+                        for (var i=0; i < profile.hours.length; i++ ) {
+                            var hour = this.convertTime (profile.hours [i], 'array');
+
+                            editHTML += '<input value="' + hour[0] + '" onchange = "tela.changeTime.call(tela, ' +i+ ', 0, event) "/>:<input value="' + hour[1] + '" onchange = "tela.changeTime(' +i+ ', 1, event) " /><br>' ;
+                        }
+                        editHTML +=  '<input onchange = "tela.changeTime.call(tela, ' + profile.hours.length + ', 0, event) "/>:<input onchange = "tela.changeTime(' +profile.hours.length+ ', 1, event) " /><br>';
+                        editHTML +=  '<button onclick=" tela.saveTime.call(tela)"> Salvar </button>';
+
+                        return editHTML;
                     },
                     timer: function () {
                         var profile = this.profiles[this.selectedProfile],
                             times = this.splitTimer(profile.hours, this.getCurrentTime()),
                             nextTime = times[0],
                             vm = this,
-                            timerHTML = '<h1>'+ profile.name +'</h1> <h3> Próximo horario: ' + this.convertTime(nextTime) + ' </h3> <ul>';
+                            timerHTML = '<h1>'+ profile.name +'</h1> <a href="#" onClick="tela.goToPage.call(tela, \'edit\', ' + this.selectedProfile + ')" > Editar </a> <h3> Próximo horario: ' + this.convertTime(nextTime) + ' </h3> <ul>';
 
                         times.splice(0, 1);
 
@@ -81,6 +96,31 @@
                     }
 
                     return time.join(':');
+                },
+                changeTime: function(index, position, e) {
+                    var hour;
+
+                    if (!this.profiles[this.selectedProfile].hours [index]) {
+                        hour = [0, 0];
+                    } else {
+                        hour = this.convertTime (this.profiles[this.selectedProfile].hours [index], 'array');
+                    }
+
+                    hour[position]= parseInt (e.target.value);
+
+                    if (position === 1 && hour[position] < 10){
+                        hour[position] = '0' + hour[position]
+                    }
+
+                    this.profiles[this.selectedProfile].hours [index] = parseInt(hour[0] + '' + hour[1]);
+
+                    tela.goToPage('edit', this.selectedProfile);
+                },
+                saveTime: function () {
+                    axios.post('/profiles', {
+                        index: this.selectedProfile,
+                        data: this.profiles[this.selectedProfile]
+                    });
                 },
                 getCurrentTime: function () {
                     var date = new Date (),

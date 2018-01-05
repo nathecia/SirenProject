@@ -5,9 +5,9 @@ const five = require("johnny-five"),
       profiles = require('./settings/profile'),
       bodyParser = require('body-parser');
 
-const jsonParser = bodyParser.json()
+const jsonParser = bodyParser.json();
 
-board.on("ready", () => {
+let startServer = () => {
   let siren = new five.Led(13);
 
   app.listen(3000, () => {
@@ -41,4 +41,6 @@ board.on("ready", () => {
       siren.off();
       res.send('Desligado!');
   });
-});
+}
+
+board.on("ready", startServer );
