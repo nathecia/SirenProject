@@ -2,12 +2,262 @@
 <html>
     <head>
         <meta charset="utf-8">
-        <title>Cremosa</title>
+        <title>SirenProject</title>
+
+        <link href="https://fonts.googleapis.com/css?family=Lato:300,400,700" rel="stylesheet">
+
+        <style media="screen">
+            * {
+                font-family: 'Lato', sans-serif;
+            }
+
+            body {
+                padding: 0;
+                margin: 0;
+
+                background-color: #3eea08;
+                background-image: linear-gradient(148deg, #3eea08 0%, #cde655 100%);
+                height: 100%;
+                background-repeat: no-repeat;
+                background-attachment: fixed;
+            }
+
+            .container {
+                min-width: 400px;
+                max-width: 800px;
+                background-color: #fff;
+                box-shadow: 0 3px 6px rgba(0,0,0,0.16), 0 3px 6px rgba(0,0,0,0.23);
+                margin: 40px auto;
+                padding: 20px;
+                border-radius: 10px;
+                text-align: center;
+            }
+
+            .profiles {
+                text-align: center;
+            }
+
+            .profile {
+                width: 180px;
+                min-height: 180px;
+                display: inline-block;
+                cursor: pointer;
+                border: 1px solid #ccc;
+                margin: 5px;
+                border-radius: 10px;
+                text-align: center;
+                line-height: 42px;
+                font-size: 19px;
+                transition: all 300ms ease;
+                vertical-align: top;
+            }
+
+            .profile:hover {
+                border: 1px solid #000;
+            }
+
+            .profile .icon {
+                font-size: 4em;
+                line-height: 120px;
+            }
+
+            .column {
+                display: inline-block;
+                width: 49%;
+                vertical-align: top;
+            }
+
+            .title {
+                padding: 9px 0;
+            }
+
+            .title h1 {
+                text-transform: uppercase;
+                display: inline-block;
+                margin: 0;
+            }
+
+            .title a {
+                color: #666;
+                text-decoration: none;
+            }
+
+            .title a:hover {
+                text-decoration: underline;
+            }
+
+            .title .edit-link {
+                margin-left: 6px;
+            }
+
+            .queue {
+                list-style: none;
+                padding: 0;
+                width: 100%;
+                border: 1px solid #ccc;
+                border-radius: 3px;
+                overflow: hidden;
+                margin: 0;
+            }
+
+            .queue li {
+                height: 35px;
+                line-height: 35px;
+                padding: 0 10px;
+            }
+
+            .queue li:nth-child(odd) {
+                background-color: #eee;
+            }
+
+            .column.right {
+                text-align: center;
+                padding: 20px 0;
+            }
+
+            .clock-icon {
+                font-size: 7em;
+            }
+
+            .column.right h3 {
+                font-size: 3em;
+                margin: 0;
+            }
+
+            .input {
+                display: inline-block;
+                padding: 5px;
+                background-color: #fff;
+                border: 1px solid #ccc;
+                color: #000;
+                text-decoration: none;
+                border-radius: 3px;
+                margin: 5px 0;
+                transition: all 300ms ease;
+                font-size: 15px;
+            }
+
+            .input.w20 {
+                width: 20px;
+            }
+
+            .button {
+                display: inline-block;
+                padding: 5px 15px;
+                background-color: #fff;
+                border: 1px solid #ccc;
+                color: #000;
+                text-decoration: none;
+                border-radius: 3px;
+                margin: 5px 0;
+                transition: all 300ms ease;
+                font-size: 15px;
+                cursor: pointer;
+            }
+
+            .button:hover {
+                border: 1px solid #000;
+            }
+
+        </style>
     </head>
     <body>
         <div id="Tela"></div>
         <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
         <script src="https://cdn.jsdelivr.net/npm/lodash@4.17.4/lodash.min.js"></script>
+        <script defer src="https://use.fontawesome.com/releases/v5.0.2/js/all.js"></script>
+
+        <script id="profile.html" type="x-template">
+            <div class="container">
+                <img src="/static/logo.jpg" style="width: 40%; margin-bottom: 20px;">
+                <div class="profiles" >
+                    <% _.forEach(profiles, function(profile, index) { %>
+                        <div class="profile" onclick="tela.goToPage.call(tela, 'timer', <%- index %> , event)">
+                            <div class="icon">
+                                <i class="far fa-clock"></i>
+                            </div>
+                            <span> <%- profile.name %> </span>
+                        </div>
+                    <% }); %>
+                    <div class="profile" onclick="tela.goToPage.call(tela, 'newProfile', 0 , event)">
+                        <div class="icon">
+                            <i class="fas fa-plus"></i>
+                        </div>
+                        <span> Novo Perfil </span>
+                    </div>
+                </div>
+            </div>
+        </script>
+
+        <script id="edit.html" type="x-template">
+            <div class="container">
+                <h3> Editando <input onchange="tela.changeTitle.call(tela, event)" type="text" style="font-size: 20px;" value="<%- profile.name %>"> </h3>
+                <% _.forEach(profile.hours, function(hour, index) { %>
+                    <% hour = tela.convertTime (hour, 'array') %>
+                    <input class="input w20" value="<%- hour[0] %>" onchange="tela.changeTime.call(tela, <%- index %>, 0, event)"/>
+                    :
+                    <input class="input w20" value="<%- hour[1] %>" onchange="tela.changeTime.call(tela, <%- index %>, 1, event)"/>
+                    <button class="button" onclick="tela.removeTime.call(tela, <%- index %>)">Remover</button><br>
+                <% }); %>
+
+                <input class="input w20" onchange = "tela.changeTime.call(tela, <%- profile.hours.length %>, 0, event) "/>
+                :
+                <input class="input w20" onchange = "tela.changeTime.call(tela, <%- profile.hours.length %>, 1, event) " /><br>
+
+                <button class="button" onclick="tela.saveTime.call(tela, <%- selectedProfile %>)"> Salvar </button>
+                <button class="button" onClick="tela.goToPage.call(tela, 'timer', <%- selectedProfile %>)" > Cancelar </button>
+                <button class="button" onClick="tela.deleteProfile.call(tela)" > Apagar </button>
+            </div>
+        </script>
+
+        <script id="timer.html" type="x-template">
+            <div class="container">
+                <div class="timer">
+                    <div class="column left">
+                        <div class="title">
+                            <h1> <%- profile.name %> </h1>
+                            <span class="edit-link">
+                                [<a href="#" onClick="tela.goToPage.call(tela, 'edit', <%- selectedProfile %>)" >
+                                    Editar
+                                </a>]
+                            </span>
+                        </div>
+                        <span>
+                            Lista de horarios a vir:
+                        </span>
+                        <ul class="queue">
+                            <% _.forEach(times, function(hour, index) { %>
+                                <li>
+                                    <i class="fas fa-bell"></i> <%- tela.convertTime(hour) %>
+                                </li>
+                            <% }); %>
+                        </ul>
+                    </div>
+                    <div class="column right">
+                        <div class="clock-icon">
+                            <i class="far fa-clock"></i>
+                        </div>
+                        <span> Próximo horario </span>
+                        <h3> <%- nextTime %> </h3>
+                    </div>
+                </div>
+
+                <a href="#" class="button" onclick="tela.goToPage.call(tela, 'profile')"> voltar </a>
+            </div>
+        </script>
+
+        <script id="newProfile.html" type="x-template">
+            <div class="container">
+                <div>
+                    <label for="nome"> Nome do Perfil: </label>
+                    <input id="nome" class="input" />
+                </div>
+
+                <button class = "button" onclick="tela.goToPage.call(tela, 'profile')"> Voltar </button>
+                <button class = "button" onclick="tela.saveProfile.call(tela)"> Salvar </button>
+            </div>
+        </script>
+
         <script>
             function Tela() {
                 this.state = 'profile';
@@ -19,43 +269,17 @@
             Tela.prototype = {
                 pages: {
                     profile: function() {
-                        var profilesHTML = '';
-                        for (var i = 0; i < this.profiles.length; i++ ) {
-                            var profile = this.profiles[i];
-                            profilesHTML += '<button onclick="tela.goToPage.call(tela, \'timer\', ' + i + ', event)">' + profile.name + '</button></br>';
-                        }
-                        return profilesHTML;
+                        return this.pageRender('profile.html', { profiles: this.profiles });
                     },
                     edit: function () {
-                        var editHTML = '',
-                            profile = this.profiles[this.selectedProfile];
-
-
-                        for (var i=0; i < profile.hours.length; i++ ) {
-                            var hour = this.convertTime (profile.hours [i], 'array');
-
-                            editHTML += '<input value="' + hour[0] + '" onchange = "tela.changeTime.call(tela, ' +i+ ', 0, event) "/>:<input value="' + hour[1] + '" onchange = "tela.changeTime(' +i+ ', 1, event) " /><br>' ;
-                        }
-                        editHTML +=  '<input onchange = "tela.changeTime.call(tela, ' + profile.hours.length + ', 0, event) "/>:<input onchange = "tela.changeTime(' +profile.hours.length+ ', 1, event) " /><br>';
-                        editHTML +=  '<button onclick=" tela.saveTime.call(tela)"> Salvar </button>';
-
-                        return editHTML;
+                        return this.pageRender('edit.html', { profile: this.profiles[this.selectedProfile], selectedProfile: this.selectedProfile });
                     },
                     timer: function () {
                         var profile = this.profiles[this.selectedProfile],
                             times = this.splitTimer(profile.hours, this.getCurrentTime()),
-                            nextTime = times[0],
-                            vm = this,
-                            timerHTML = '<h1>'+ profile.name +'</h1> <a href="#" onClick="tela.goToPage.call(tela, \'edit\', ' + this.selectedProfile + ')" > Editar </a> <h3> Próximo horario: ' + this.convertTime(nextTime) + ' </h3> <ul>';
-
+                            nextTime = this.convertTime(times[0] || 0000),
+                            vm = this;
                         times.splice(0, 1);
-
-                        for (var i = 0; i < times.length; i++ ) {
-                            var hour = times[i];
-                            timerHTML += '<li>' + this.convertTime(hour) + '</li>';
-                        }
-
-                        timerHTML +=  '</ul> <br> <a href="#" onclick="tela.goToPage.call(tela, \'profile\')"> voltar </a>';
 
                         this.interval = setInterval(function() {
                             if (nextTime === vm.getCurrentTime() && !vm.isRinging) {
@@ -80,7 +304,10 @@
 
                         }, 1000);
 
-                        return timerHTML;
+                        return this.pageRender('timer.html', { profile: this.profiles[this.selectedProfile], nextTime: nextTime, selectedProfile: this.selectedProfile, times: times });
+                    },
+                    newProfile: function(){
+                        return this.pageRender('newProfile.html', {});
                     }
                 },
                 convertTime: function (time, type) {
@@ -96,6 +323,30 @@
                     }
 
                     return time.join(':');
+                },
+                pageRender: function(page, data) {
+                    var pageHTML = document.getElementById(page).innerText,
+                        compiledHTML = _.template(pageHTML);
+                    return compiledHTML(data);
+                },
+                saveProfile: function (){
+                    var profile = document.getElementById('nome').value;
+                    axios.post('/profiles', {
+                        index: this.profiles.length,
+                        data: {
+                            name: profile,
+                            hours: []
+                        }
+                    }).then(function () {
+                        axios.get('/profiles')
+                        .then(function (res) {
+                            tela.profiles = res.data;
+                            tela.goToPage.apply(tela, ['profile']);
+                        })
+                    })
+                },
+                changeTitle: function (event) {
+                  this.profiles[this.selectedProfile].name = event.target.value;
                 },
                 changeTime: function(index, position, e) {
                     var hour;
@@ -116,11 +367,26 @@
 
                     tela.goToPage('edit', this.selectedProfile);
                 },
-                saveTime: function () {
+                saveTime: function (selectedProfile) {
                     axios.post('/profiles', {
                         index: this.selectedProfile,
                         data: this.profiles[this.selectedProfile]
+                    }).then(function() {
+                      tela.goToPage('timer', selectedProfile);
                     });
+                },
+                removeTime: function (index) {
+                    this.profiles[this.selectedProfile].hours.splice(index, 1)
+                    tela.goToPage('edit', this.selectedProfile);
+                },
+                deleteProfile: function () {
+                  axios.delete('/profiles/'+this.selectedProfile).then(function () {
+                      axios.get('/profiles')
+                      .then(function (res) {
+                          tela.profiles = res.data;
+                          tela.goToPage.apply(tela, ['profile']);
+                      })
+                  });
                 },
                 getCurrentTime: function () {
                     var date = new Date (),
@@ -167,7 +433,7 @@
                         clearInterval(this.interval);
                     }
 
-                    conteiner.innerHTML= this.pages[this.state].apply(this);
+                    conteiner.innerHTML = this.pages[this.state].apply(this);
                 }
             }
 

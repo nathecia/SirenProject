@@ -17,6 +17,10 @@ class Profile {
         this.profile[index] = newProfile;
         this.saveFile();
     }
+    remove(index) {
+      this.profile.splice(index, 1);
+      this.saveFile();
+    }
 
     get() {
         return this.profile;

@@ -1,14 +1,17 @@
 const five = require("johnny-five"),
-      board = new five.Board(),
+      // board = new five.Board(),
       express = require('express'),
       app = express(),
       profiles = require('./settings/profile'),
+      path = require('path'),
       bodyParser = require('body-parser');
 
 const jsonParser = bodyParser.json();
 
+app.use('/static', express.static(path.join(__dirname, 'static')))
+
 let startServer = () => {
-  let siren = new five.Led(13);
+  // let siren = new five.Led(13);
 
   app.listen(3000, () => {
       console.log('Running Server at port 3000');
@@ -32,15 +35,27 @@ let startServer = () => {
       res.send(profiles.get());
   });
 
+  app.delete('/profiles/:index', jsonParser, (req, res) => {
+    let index = parseInt(req.params.index, 10);
+
+    if (index > -1) {
+        profiles.remove(index);
+    }
+
+    res.send(profiles.get());
+});
+
   app.get('/on', (req, res) => {
-      siren.on();
+      // siren.on();
       res.send('Ligado!');
   });
 
   app.get('/off', (req, res) => {
-      siren.off();
+      // siren.off();
       res.send('Desligado!');
   });
 }
 
-board.on("ready", startServer );
+startServer();
+
+// board.on("ready", startServer );
